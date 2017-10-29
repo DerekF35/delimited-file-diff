@@ -2,6 +2,8 @@
 ## INCLUDES
 ##################
 
+INCLUDES_DIR="./includes/"
+
 require 'optparse'
 require 'logger'
 require 'FileUtils'
@@ -9,6 +11,7 @@ require 'yaml'
 require 'csv'
 require 'hashdiff'
 require 'ruby-progressbar'
+require_relative INCLUDES_DIR + "Hash.rb"
 
 ##################
 ## SETUP
@@ -17,8 +20,6 @@ require 'ruby-progressbar'
 $log = Logger.new(STDOUT)
 $log.level = Logger::INFO
 $log.level = Logger::DEBUG
-INCLUDES_DIR="./includes/"
-OUTPUT_DIRNAME="output"
 KEY_DELIM="~"
 PROG_FORMAT="%t |%B| %p%% %e"
 
@@ -32,18 +33,7 @@ require_relative INCLUDES_DIR + "input.rb"
 ## Setup output
 #################
 
-OUTPUT_DIR=$inputs[:project] + "/" +  OUTPUT_DIRNAME
-if File.directory?( OUTPUT_DIR )
-  #TODO: Ask if it should be deleted
-  $log.info("Output directory exists.  I will delete..")
-  FileUtils.rm_r( OUTPUT_DIR )
-  $log.info("...project output directory deleted.")
-end
-
-$log.info("Creating output directory (#{OUTPUT_DIR})...")
-FileUtils.mkdir_p( OUTPUT_DIR )
-$log.info("...output directory created.")
-
+OUTPUT_DIR=$inputs[:output]
 #TODO: Switch to CSV files
 singletons = {
   :first_file => [],
@@ -62,7 +52,7 @@ tmp_del = DELMS[$inputs[:delimiter].upcase]
 data = {}
 [ :first_file , :second_file].each do |fn|
   tmp_file_name = fn.to_s.gsub("_"," ")
-  tmp_file = $inputs[:project] + $inputs[fn]
+  tmp_file = $inputs[:output] + $inputs[fn]
   tmp_lines = (File.open(tmp_file , "r").readlines.size) - 1
   $log.info("Loading #{tmp_file_name} to memory (Number of lines: #{tmp_lines})...")
   data[fn] = {}
