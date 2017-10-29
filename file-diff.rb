@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 ##################
 ## INCLUDES
 ##################
@@ -22,6 +24,7 @@ $log.level = Logger::INFO
 $log.level = Logger::DEBUG
 KEY_DELIM="~"
 PROG_FORMAT="%t |%B| %p%% %e"
+DELMS = { "TAB" => "\t" , "COMMA" => "," , "PIPE" => "|" }
 
 ##################
 ## INPUT
@@ -45,9 +48,11 @@ diffs = {}
 ## Load files
 #################
 
-DELMS = { "TAB" => "\t" , "COMMA" => "," }
-raise "Unknown delimiter input: #{$inputs[:delimiter]}" unless DELMS.has_key?($inputs[:delimiter].upcase)
-tmp_del = DELMS[$inputs[:delimiter].upcase]
+if DELMS.has_key?($inputs[:delimiter].upcase)
+  tmp_del = DELMS[$inputs[:delimiter].upcase]
+else
+  tmp_del = $inputs[:delimiter]
+end
 
 data = {}
 [ :first_file , :second_file].each do |fn|
@@ -81,7 +86,7 @@ end
   [:second_file , :first_file]
 ].each do |file_combo|
   $log.info("Comparing #{file_combo[0]} to #{file_combo[1]}...")
-  progressbar = ProgressBar.create(:title => "Comparing #{file_combo[0]} to #{file_combo[1]}...", :starting_at => 0, :total => data[file_combo[0]].size, :format => PROG_FORMAT, :output => $stderr )
+  progressbar = ProgressBar.create(:title => "Comparing #{file_combo[0].to_s.gsub("_file","")} to #{file_combo[1].to_s.gsub("_file","")}...", :starting_at => 0, :total => data[file_combo[0]].size, :format => PROG_FORMAT, :output => $stderr )
   data[file_combo[0]].each do |k,d|
     # Singleton: check if key exists in other file
     if data[file_combo[1]].has_key?(k)
