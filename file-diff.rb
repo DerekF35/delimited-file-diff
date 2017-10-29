@@ -8,7 +8,7 @@ INCLUDES_DIR="./includes/"
 
 require 'optparse'
 require 'logger'
-require 'FileUtils'
+require 'fileutils'
 require 'yaml'
 require 'csv'
 require 'hashdiff'
