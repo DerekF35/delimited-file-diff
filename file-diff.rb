@@ -57,7 +57,7 @@ end
 data = {}
 [ :first_file , :second_file].each do |fn|
   tmp_file_name = fn.to_s.gsub("_"," ")
-  tmp_file = $inputs[:output] + $inputs[fn]
+  tmp_file = $inputs[fn]
   tmp_lines = (File.open(tmp_file , "r").readlines.size) - 1
   $log.info("Loading #{tmp_file_name} to memory (Number of lines: #{tmp_lines})...")
   data[fn] = {}
