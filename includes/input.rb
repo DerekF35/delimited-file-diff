@@ -2,8 +2,8 @@ INPUT_CONFIG = {
   :output => {
     :short => "o",
     :full => "output",
-    :description => "(REQUIRED) Path to output directory.  Will be created if doesn't exist.",
-    :default => nil
+    :description => "Path to output directory.  (Default: ./)",
+    :default => "./"
   },
   :first_file => {
     :short => "1",
@@ -42,6 +42,9 @@ $inputs = {}
 defaults = {}
 INPUT_CONFIG.each{ |k, v| defaults[k] = v[:default] }
 
+# Set initial directory to start
+$inputs[:output] ||= defaults[:output]
+
 parser = OptionParser.new do|opts|
   opts.banner = "Usage: file-diff.rb [options]"
 
@@ -59,6 +62,7 @@ parser = OptionParser.new do|opts|
 end
 
 parser.parse!
+$log.info("Commandline Inputs #{$inputs}")
 
 # Process project
 #################
@@ -86,12 +90,19 @@ if File.exists?( SAVED_CONFIG_FILE )
   $log.info("Config file exists.  I will load...")
   tmp_setup = YAML.load_file(SAVED_CONFIG_FILE)
   $log.info("...configuration loaded: #{tmp_setup}")
+
   $log.info("Merging saved configuration...")
   tmp_setup = tmp_setup.collect{|k,v| [k.to_sym, v]}.to_h
-
-  $inputs = defaults.merge(tmp_setup.merge($inputs))
+  $inputs = tmp_setup.merge($inputs)
   $log.info("...configuration merged: #{$inputs}")
 end
+
+
+
+
+$log.info("Merging default configuration...")
+$inputs = defaults.merge($inputs)
+$log.info("...default merged: #{$inputs}")
 
 $inputs.each do |k,v|
   $log.info("Parameter #{k}: #{v}")
