@@ -67,7 +67,7 @@ data = {}
     row = row.to_hash
     tmp_key_arr = []
     $inputs[:key_cols].each do |k|
-      tmp_key_arr << row[k]
+      tmp_key_arr << ( row[k] || "<BLANK_FIELD>" )
     end
     tmp_key = tmp_key_arr.join(KEY_DELIM)
     raise "Key #{tmp_key} is not unique in #{tmp_file_name}." if data[fn].has_key?(tmp_key)
