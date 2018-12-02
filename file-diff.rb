@@ -37,12 +37,6 @@ require_relative INCLUDES_DIR + "input.rb"
 #################
 
 OUTPUT_DIR=$inputs[:output]
-#TODO: Switch to CSV files
-singletons = {
-  :first_file => [],
-  :second_file => []
-}
-diffs = {}
 
 #################
 ## Load files
@@ -78,6 +72,25 @@ data = {}
 end
 
 ########################################
+## Open files
+########################################
+
+singletons ={}
+[ :first_file , :second_file ].each do |file|
+  singletons[file] = CSV.open(OUTPUT_DIR + "/" + file.to_s + "_only.txt",'w' ,
+      :col_sep => tmp_del ,
+      :write_headers => true,
+      :headers => data[file].first[1].keys
+      )
+end
+
+diffs = CSV.open(OUTPUT_DIR + "/" + "diffs.txt",'w' ,
+  :col_sep => tmp_del ,
+  :write_headers => true,
+  :headers => $inputs[:key_cols].concat(["COLUMN","FIRST_FILE","SECOND_FILE"])
+  )
+
+########################################
 ## Find differances
 ########################################
 
@@ -93,59 +106,24 @@ end
       # Only performing diffing logic on first pass
       if file_combo[0] == :first_file
         tmp_diffs = diff = HashDiff.diff(data[file_combo[0]][k], data[file_combo[1]][k])
-        diffs[k] ||= {}
         tmp_diffs.each do |d|
           tmp_ignore = false
           $inputs[:ignored_columns].each do |c|
               tmp_ignore = true if /#{c}/ =~ d[1]
           end
           if not tmp_ignore
-            diffs[k][d[1]] = { :first_file => d[2] , :second_file => d[3] }
+            diffs << k.split(KEY_DELIM).concat([ d[1] , d[2] , d[3] ])
           end
         end
       end
     else
-      singletons[file_combo[0]] << d
+      singletons[file_combo[0]] << d.values
     end
     progressbar.increment
   end
   $log.info("...files compared.")
 end
 
-########################################
-## Write differances
-########################################
-
-
-singletons.each do |file,sings|
-  $log.info("Writing singletons for #{file}...")
-  tmp_out_filename = OUTPUT_DIR + "/" + file.to_s + "_only.txt"
-  CSV.open(tmp_out_filename,'w' ,
-    :col_sep => tmp_del ,
-    :write_headers => true,
-    :headers => data[file].first[1].keys
-    ) do |outfile|
-    sings.each do |row|
-      outfile << row.values
-    end
-  end
-  $log.info("... #{file} singletons written.")
-end
-
-tmp_out_filename = OUTPUT_DIR + "/" + "diffs.txt"
-$log.info("Writting diffs...")
-tmp_header = $inputs[:key_cols].concat(["COLUMN","FIRST_FILE","SECOND_FILE"])
-CSV.open(tmp_out_filename,'w' ,
-  :col_sep => tmp_del ,
-  :write_headers => true,
-  :headers => tmp_header
-  ) do |outfile|
-  diffs.each do |key,diff_key|
-    diff_key.each do |col,diff|
-      column_header = nil
-      tmp_put = key.split(KEY_DELIM).concat([col,diff[:first_file],diff[:second_file]])
-      outfile << tmp_put
-    end
-  end
-end
-$log.info("...diffs written.")
+# Close the files
+singletons.each{ |k,v| v.close }
+diffs.close
